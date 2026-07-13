@@ -1,0 +1,44 @@
+SentinelAI/
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml
+│   │   └── security.yml
+│   ├── ISSUE_TEMPLATE/
+│   │   └── bug_report.md
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── CODEOWNERS
+│   └── dependabot.yml
+│
+├── apps/
+│   ├── android-demo/
+│   └── dashboard/
+│
+├── sdk/
+│   └── android/
+│
+├── runtime/
+│   └── rust/
+│
+├── services/
+│   ├── api/
+│   ├── intelligence/
+│   └── telemetry/
+│
+├── docs/
+│   ├── architecture.md
+│   ├── roadmap.md
+│   └── security.md
+│
+├── tests/
+├── scripts/
+├── docker/
+│
+├── README.md
+├── LICENSE
+├── SECURITY.md
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
+├── .gitignore
+├── .editorconfig
+├── docker-compose.yml
+└── Makefile
