@@ -28,6 +28,7 @@ class Reputation:
 
 @dataclass(frozen=True)
 class TransactionFacts:
+    chain_id: int
     destination: str
     is_unlimited_approval: bool = False
     spender: str | None = None
@@ -40,8 +41,8 @@ def evaluate_transaction(
 ) -> Decision:
     """Apply the minimal deterministic policy.
 
-    Only independently high-confidence malicious evidence can BLOCK.
-    Unknown or unavailable evidence never becomes an implicit ALLOW.
+    Only high-confidence malicious evidence can BLOCK. Unknown or
+    unavailable evidence never becomes an implicit ALLOW.
     """
     if (
         destination_reputation.status is ReputationStatus.MALICIOUS
@@ -51,8 +52,8 @@ def evaluate_transaction(
 
     if (
         tx.is_unlimited_approval
-        and tx.spender
-        and spender_reputation
+        and tx.spender is not None
+        and spender_reputation is not None
         and spender_reputation.status is ReputationStatus.MALICIOUS
         and spender_reputation.confidence is Confidence.HIGH
     ):
