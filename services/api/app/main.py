@@ -22,6 +22,7 @@ def health() -> dict[str, str]:
 @app.post("/v1/check-tx", response_model=CheckTransactionResponse, tags=["risk"])
 def check_transaction(request: CheckTransactionRequest) -> CheckTransactionResponse:
     tx = TransactionFacts(
+        chain_id=request.chain_id,
         destination=request.destination,
         is_unlimited_approval=request.is_unlimited_approval,
         spender=request.spender,
