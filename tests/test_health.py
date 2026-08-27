@@ -1,4 +1,13 @@
-def test_placeholder_health():
-    # Placeholder test so CI has at least one deterministic test target.
-    # Replace with real API health test when app entrypoint is confirmed.
-    assert True
+from fastapi.testclient import TestClient
+
+from services.api.app.main import app
+
+
+client = TestClient(app)
+
+
+def test_health_endpoint() -> None:
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
