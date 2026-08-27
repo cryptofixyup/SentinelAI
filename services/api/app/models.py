@@ -1,4 +1,6 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from services.api.app.validation import normalize_address
 
 
 class ReputationInput(BaseModel):
@@ -11,13 +13,26 @@ class ReputationInput(BaseModel):
 class CheckTransactionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    destination: str = Field(min_length=1)
+    chain_id: int = Field(gt=0)
+    destination: str
     is_unlimited_approval: bool = False
     spender: str | None = None
     destination_reputation: ReputationInput
     spender_reputation: ReputationInput | None = None
 
+    @field_validator("destination")
+    @classmethod
+    def validate_destination(cls, value: str) -> str:
+        return normalize_address(value)
+
+    @field_validator("spender")
+    @classmethod
+    def validate_spender(cls, value: str | None) -> str | None:
+        return normalize_address(value) if value is not None else None
+
 
 class CheckTransactionResponse(BaseModel):
-    decision: str
+    model_config = ConfigDict(extra="forbid")
+
+    decision: str = Field(pattern="^(allow|warn|block)$")
     policy_version: str
