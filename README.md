@@ -6,8 +6,8 @@ Security-first medical AI infrastructure built around evidence-bounded deploymen
 
 - **MedSigLIP V0 integration:** Medical image/text embedding architecture suitable for data-efficient classification, zero-shot classification, and semantic image retrieval; text generation is outside the intended model role.
 - **Maximum Efficiency & Security Protocol (Sep 2026):** Ultra-PEFT design using rank-4 Q/V-only LoRA or 8-token prompt tuning, with frozen encoders, strict pre-embedding de-identification, differential-privacy controls, attested-enclave inference, and encrypted vector storage.
-- **SecureFreshDiskANN:** Optional persistent vector-storage layer for confidential embeddings, designed for encrypted storage and retrieval inside an attested or air-gapped boundary.
-- **Offline / air-gapped deployment:** Architecture supports deployments where external network access is unavailable or prohibited.
+- **SecureFreshDiskANN:** Proposed optional persistent vector-storage layer for confidential embeddings, designed for encrypted storage and retrieval within an attested or air-gapped boundary.
+- **Offline / air-gapped deployment:** Architecture supports deployments where external network access is unavailable or prohibited, subject to local availability of all required dependencies.
 - **Validation-gated operation:** Performance, privacy-budget behavior, clinical utility, and deployment controls are treated as measurable validation requirements rather than assumptions.
 
 ## Security Protocol Status
@@ -26,7 +26,7 @@ Accordingly, this repository distinguishes:
 
 ## Storage Security
 
-When persistent embeddings are required, SecureFreshDiskANN is intended to prevent plaintext vector exposure outside the protected runtime boundary. The supplied assessment describes encrypted persistent storage, sealed keys, rate limiting, hard buffer rejection, and encrypted background snapshots.
+When persistent embeddings are required, SecureFreshDiskANN is designed as a storage-layer control intended to keep plaintext vectors within the protected runtime boundary. The supplied assessment describes encrypted persistent storage, sealed keys, rate limiting, hard buffer rejection, and encrypted background snapshots.
 
 The component is optional for purely ephemeral in-memory caches or where an equivalent attested, hardware-encrypted vector store is already deployed.
 
