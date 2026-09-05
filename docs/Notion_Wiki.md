@@ -2,7 +2,7 @@
 
 ## Maximum Efficiency & Maximum Security Protocol — September 2026 [Engineering Baseline v1.1]
 
-This protocol defines a validation-gated production architecture for MedSigLIP-class medical vision-language encoders under stringent clinical, privacy, and security requirements.
+This protocol defines a validation-gated engineering architecture for MedSigLIP-class medical vision-language encoders under stringent clinical, privacy, and security requirements.
 
 ### Model Boundary
 
@@ -20,7 +20,7 @@ MedSigLIP is treated here as an image/text embedding model for medical applicati
 ### 2. Privacy & Federated Controls
 
 - Mandatory pre-embedding de-identification covering the applicable HIPAA identifiers, GDPR requirements, and automated burned-in text/PHI detection.
-- Client-level differential privacy may be applied to LoRA updates with a stated budget such as `epsilon <= 2.0`, `delta = 1e-5`, provided the complete accounting parameters are documented.
+- Client-level differential privacy may be applied to LoRA updates using a declared budget such as `epsilon <= 2.0`, `delta = 1e-5`, provided the complete accounting parameters are documented.
 - Federated learning is restricted to PEFT deltas; raw patient data remains at the institution.
 - Secure aggregation may combine cryptographic and confidential-compute controls, but each mechanism must be specified as part of a concrete protocol rather than treated as a guarantee by name alone.
 
@@ -32,7 +32,7 @@ MedSigLIP is treated here as an image/text embedding model for medical applicati
 
 ### 4. Secure Vector Storage — SecureFreshDiskANN
 
-For deployments requiring persistent embeddings, SecureFreshDiskANN provides the proposed encrypted persistent-memory vector-index layer.
+For deployments requiring persistent embeddings, SecureFreshDiskANN is the proposed encrypted persistent-memory vector-index layer.
 
 The supplied assessment describes:
 
