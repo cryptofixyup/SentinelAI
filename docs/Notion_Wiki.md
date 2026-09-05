@@ -13,63 +13,45 @@ MedSigLIP is treated here as an image/text embedding model for medical applicati
 - Freeze the vision and text encoders.
 - Inject LoRA adapters exclusively on query and value projections, with rank `r = 4` and `alpha = 8`, or use 8-token prompt tuning.
 - Optional 4-bit base-model quantization with BF16 compute where the implementation and hardware support it.
-- The design minimizes the trainable parameter surface; the exact trainable fraction must be calculated from the concrete model/adaptor configuration.
+- The design minimizes the trainable parameter surface; the exact trainable fraction must be calculated from the concrete model/adapter configuration.
 
 **Evidence boundary:** A small trainable fraction does not by itself prove negligible memorization or inversion risk. Those properties require empirical privacy/security evaluation.
 
 ### 2. Privacy & Federated Controls
 
 - Mandatory pre-embedding de-identification covering the applicable HIPAA identifiers, GDPR requirements, and automated burned-in text/PHI detection.
-- Client-level differential privacy may be applied to LoRA updates using a declared budget such as `epsilon <= 2.0`, `delta = 1e-5`, provided the complete accounting parameters are documented.
-- Federated learning is restricted to PEFT deltas; raw patient data remains at the institution.
-- Secure aggregation may combine cryptographic and confidential-compute controls, but each mechanism must be specified as part of a concrete protocol rather than treated as a guarantee by name alone.
+- Client-level differential privacy may be applied with a declared budget such as `epsilon <= 2.0`, `delta = 1e-5`, provided complete accounting parameters are documented.
+- Federated learning is restricted to PEFT deltas; secure aggregation must be concretely specified.
 
-### 3. Runtime & Deployment Envelope
+### 3. Runtime & Deployment Controls
 
-- Inference and adaptation can be confined to an attested confidential-compute boundary with HSM-wrapped keys and encrypted vector storage.
-- Offline and air-gapped deployment is supported at the architecture level where all required model, runtime, key-management, and update dependencies are available locally.
-- Output minimization, rate limiting, timing controls, and other hardening measures should be evaluated against the specific threat model.
+- Attested confidential-compute boundary for deployments that enable confidential inference.
+- HSM-wrapped keys and encrypted vector storage for deployments that enable these controls.
+- Offline / air-gapped operation is supported at the architecture level when all required dependencies are locally available.
+- Hardening must be evaluated against the declared threat model.
 
-### 4. Secure Vector Storage — SecureFreshDiskANN
+### 4. SecureFreshDiskANN
 
-For deployments requiring persistent embeddings, SecureFreshDiskANN is the proposed encrypted persistent-memory vector-index layer.
+SecureFreshDiskANN is a proposed optional persistent-memory vector-index layer for confidential embeddings. The supplied assessment describes encrypted storage, an attested or air-gapped boundary, sealed keys, rate limiting, hard buffer rejection, encrypted snapshots, and confidential-compute compatibility.
 
-The supplied assessment describes:
+Performance targets such as `2,500+ inserts/s` and sub-ms range queries are benchmark claims and require reproducible evidence before being treated as production guarantees.
 
-- encrypted persistent vector storage;
-- storage-layer operation within an attested or air-gapped boundary;
-- sealed keys, rate limiting, hard buffer rejection, and encrypted background snapshots;
-- compatibility with confidential-compute runtimes;
-- benchmark targets of `2,500+` sustained inserts/s and sub-millisecond range queries once indexed.
+### 5. Validation & Change Control
 
-These performance figures are benchmark claims and require reproducible test evidence before being presented as production guarantees.
-
-SecureFreshDiskANN is optional for purely ephemeral in-memory caches or environments that already provide an equivalent attested, hardware-encrypted vector store.
-
-### 5. Validation & Change-Control Gates
-
-Before clinical deployment, each institution must validate utility on its own local data distribution and intended clinical task.
-
-The supplied assessment explicitly identifies absolute VRAM, wall-clock time, throughput, and clinical utility under rank-4 PEFT plus the stated privacy budget as requiring independent measurement or site-specific validation.
-
-Any material change to PEFT rank, privacy budget, model quantization, enclave configuration, cryptographic protocol, retrieval policy, or output surface should trigger documented change-control and re-validation according to the institution's governance process.
+- Validate local clinical utility on the intended task and population before clinical use.
+- Independently measure VRAM, wall-clock training time, throughput, privacy behavior, and clinical utility under the concrete deployment configuration.
+- Material changes to the model, PEFT configuration, privacy parameters, runtime boundary, or storage layer trigger revalidation.
 
 ### 6. Claims Policy
 
-The repository uses the following evidence hierarchy:
+Use the following evidence hierarchy:
 
-**Implemented** → **Benchmarked** → **Independently Audited** → **Clinically Validated** → **Regulatory Readiness Evidence**
+1. **Implemented** — present in the repository and executable.
+2. **Benchmarked** — measured under a named environment and configuration.
+3. **Independently Audited** — supported by an identifiable independent report and scope.
+4. **Clinically Validated** — supported by institution-specific evidence on the intended task and population.
+5. **Regulatory Readiness Evidence** — documentation and controls mapped to the applicable regulatory pathway.
 
-A claim must not be promoted to a stronger category without the corresponding artifact.
+### Deployment Position
 
-Examples:
-
-- "Architecture supports offline inference" is an architectural statement.
-- "18 ms/image on T4" is a benchmark statement only when the benchmark configuration is documented.
-- "Independently audited" requires an identifiable audit scope and report.
-- "Clinically validated" requires institution-specific validation evidence.
-- "FDA-ready" or equivalent regulatory language requires applicability and documentation under the actual regulatory pathway.
-
-### 7. Deployment Position
-
-The September 2026 configuration is best described as a **security-first engineering baseline with validation gates**. It should not be described as the objectively maximum achievable security configuration, universally lossless, independently audited, or clinically production-ready unless those claims are supported by corresponding evidence.
+SentinelAI is positioned here as a security-first engineering baseline with validation gates. It is not presented as objectively maximum achievable security, universally lossless, independently audited, or clinically production-ready without the corresponding evidence.
