@@ -77,7 +77,10 @@ def evaluate_custody(state: dict[str, Any], policy: dict[str, Any]) -> dict[str,
     if policy["custody"]["require_threshold_below_signer_count"] and not threshold < len(owners): hard_blocks.append("threshold_not_below_signer_count")
     hard_blocks.extend(str(item) for item in state.get("hard_blocks", []) if item)
 
-    signer_scores = [signer_independence(s) for s in state.get("signers", [])]
+    signers = state.get("signers", [])
+    if len(signers) != len(owners):
+        hard_blocks.append("signer_metadata_mismatch")
+    signer_scores = [signer_independence(s) for s in signers]
     min_signer = min(signer_scores) if signer_scores else 0
     if min_signer < int(policy["custody"]["minimum_signer_independence"]): hard_blocks.append("signer_independence_below_minimum")
 
