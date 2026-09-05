@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sentinelai.dev/schemas/custody-policy.schema.json",
+  "title": "SentinelAI Custody Policy",
+  "type": "object",
+  "required": ["version", "mode", "custody", "modules", "guards", "allowlists", "transaction", "recovery", "risk", "hard_blocks"],
+  "properties": {
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+$"},
+    "mode": {"const": "FAIL_CLOSED"},
+    "custody": {
+      "type": "object", "required": ["minimum_threshold", "require_threshold_below_signer_count", "minimum_signer_independence", "preferred_signer_independence", "minimum_recovery_score"],
+      "properties": {
+        "minimum_threshold": {"type": "integer", "minimum": 2},
+        "require_threshold_below_signer_count": {"const": true},
+        "minimum_signer_independence": {"type": "integer", "minimum": 0, "maximum": 100},
+        "preferred_signer_independence": {"type": "integer", "minimum": 0, "maximum": 100},
+        "minimum_recovery_score": {"type": "integer", "minimum": 0, "maximum": 100}
+      }, "additionalProperties": false
+    },
+    "modules": {"$ref": "#/$defs/extensionPolicy"},
+    "guards": {"$ref": "#/$defs/extensionPolicyWithRecovery"},
+    "allowlists": {
+      "type": "object", "additionalProperties": false,
+      "required": ["modules", "guards", "module_guards", "fallback_handlers"],
+      "properties": {
+        "modules": {"$ref": "#/$defs/allowlist"},
+        "guards": {"$ref": "#/$defs/allowlist"},
+        "module_guards": {"$ref": "#/$defs/allowlist"},
+        "fallback_handlers": {"$ref": "#/$defs/allowlist"}
+      }
+    },
+    "transaction": {
+      "type": "object", "additionalProperties": false,
+      "required": ["require_destination_verification", "require_calldata_decoding", "require_simulation_for_high_value", "block_unlimited_approval", "block_unknown_delegatecall"],
+      "properties": {
+        "require_destination_verification": {"const": true},
+        "require_calldata_decoding": {"const": true},
+        "require_simulation_for_high_value": {"const": true},
+        "block_unlimited_approval": {"const": true},
+        "block_unknown_delegatecall": {"const": true}
+      }
+    },
+    "recovery": {"type": "object", "additionalProperties": false, "required": ["require_test", "max_age_days"], "properties": {"require_test": {"const": true}, "max_age_days": {"type": "integer", "minimum": 1}}},
+    "risk": {"type": "object", "required": ["bands"], "properties": {"bands": {"type": "object", "required": ["low_max", "moderate_max", "high_max", "critical_max"], "properties": {"low_max": {"const": 19}, "moderate_max": {"const": 39}, "high_max": {"const": 59}, "critical_max": {"const": 79}}, "additionalProperties": false}}, "additionalProperties": false},
+    "hard_blocks": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+  },
+  "$defs": {
+    "extensionPolicy": {"type": "object", "additionalProperties": false, "required": ["default", "require_source_verified", "require_code_hash", "require_audit_for_material"], "properties": {"default": {"const": "DENY"}, "require_source_verified": {"const": true}, "require_code_hash": {"const": true}, "require_audit_for_material": {"const": true}}},
+    "extensionPolicyWithRecovery": {"type": "object", "additionalProperties": false, "required": ["default", "require_source_verified", "require_code_hash", "require_audit_for_material", "require_recovery_test"], "properties": {"default": {"const": "DENY"}, "require_source_verified": {"const": true}, "require_code_hash": {"const": true}, "require_audit_for_material": {"const": true}, "require_recovery_test": {"const": true}}},
+    "allowlist": {"type": "array", "items": {"type": "object", "required": ["chain_id", "address", "code_hash"], "properties": {"chain_id": {"type": "integer", "minimum": 1}, "address": {"type": "string", "pattern": "^0x[0-9a-fA-F]{40}$"}, "code_hash": {"type": "string", "pattern": "^0x[0-9a-fA-F]{64}$"}, "audit_status": {"type": "string"}, "max_value": {"type": "string"}}, "additionalProperties": false}, "uniqueItems": true}
+  },
+  "additionalProperties": false
+}
