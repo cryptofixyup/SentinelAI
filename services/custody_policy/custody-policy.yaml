@@ -15,7 +15,13 @@ guards:
   default: DENY
   require_source_verified: true
   require_code_hash: true
+  require_audit_for_material: true
   require_recovery_test: true
+allowlists:
+  modules: []
+  guards: []
+  module_guards: []
+  fallback_handlers: []
 transaction:
   require_destination_verification: true
   require_calldata_decoding: true
@@ -34,6 +40,7 @@ risk:
 hard_blocks:
   - unknown_module
   - unknown_guard
+  - unknown_module_guard
   - unknown_fallback
   - simulation_mismatch
   - unauthorized_owner_change
