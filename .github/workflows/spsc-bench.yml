@@ -1,0 +1,77 @@
+name: SPSC Benchmarks & Cache Coherence
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - spsc-benchmarks
+
+permissions:
+  contents: read
+
+jobs:
+  spsc-benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust Stable Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build benchmark
+        run: cargo build --release --bin spsc_bench
+
+      - name: Run packed SPSC benchmark
+        env:
+          SPSC_MODE: packed
+          SPSC_MESSAGES: 5000000
+        run: |
+          ./target/release/spsc_bench | tee packed.txt
+
+      - name: Run aligned SPSC benchmark
+        env:
+          SPSC_MODE: aligned
+          SPSC_MESSAGES: 5000000
+        run: |
+          ./target/release/spsc_bench | tee aligned.txt
+
+      - name: Profile packed cache/coherence counters
+        env:
+          SPSC_MODE: packed
+          SPSC_MESSAGES: 5000000
+        run: |
+          sudo perf stat -x, -e L1-dcache-loads,L1-dcache-load-misses,cache-references,cache-misses,context-switches,cpu-migrations \
+            ./target/release/spsc_bench >/dev/null 2>packed-perf.txt
+          cat packed-perf.txt
+
+      - name: Profile aligned cache/coherence counters
+        env:
+          SPSC_MODE: aligned
+          SPSC_MESSAGES: 5000000
+        run: |
+          sudo perf stat -x, -e L1-dcache-loads,L1-dcache-load-misses,cache-references,cache-misses,context-switches,cpu-migrations \
+            ./target/release/spsc_bench >/dev/null 2>aligned-perf.txt
+          cat aligned-perf.txt
+
+      - name: Publish benchmark results
+        if: always()
+        run: |
+          {
+            echo '## SPSC benchmark results'
+            echo
+            echo '### Packed counters'
+            cat packed.txt 2>/dev/null || true
+            echo
+            echo '### Aligned counters'
+            cat aligned.txt 2>/dev/null || true
+            echo
+            echo '### Packed perf counters'
+            cat packed-perf.txt 2>/dev/null || true
+            echo
+            echo '### Aligned perf counters'
+            cat aligned-perf.txt 2>/dev/null || true
+          } >> "$GITHUB_STEP_SUMMARY"
