@@ -22,7 +22,7 @@ pub struct VersionedTelemetryFrame {
     pub flags: u8,
 }
 
-const _: () = assert!(size_of::<VersionedTelemetryFrame>() == 64);
+const _: () = assert!(size_of::<VersionedTelemetryFrame>() == WIRE_SIZE);
 const _: () = assert!(align_of::<VersionedTelemetryFrame>() == 8);
 
 #[repr(C, align(64))]
@@ -48,7 +48,9 @@ pub fn decode(bytes: &[u8]) -> Result<VersionedTelemetryFrame, DecodeError> {
         return Err(DecodeError::InvalidLength);
     }
 
-    let metrics = std::array::from_fn(|i| f32::from_le_bytes(bytes[24 + i * 4..28 + i * 4].try_into().unwrap()));
+    let metrics = std::array::from_fn(|i| {
+        f32::from_le_bytes(bytes[24 + i * 4..28 + i * 4].try_into().unwrap())
+    });
     if metrics.iter().any(|v| !v.is_finite()) {
         return Err(DecodeError::NonFiniteMetric);
     }
