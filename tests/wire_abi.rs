@@ -46,7 +46,7 @@ fn canonical_vector_is_exactly_64_bytes_and_roundtrips() {
     assert_eq!(frame.magic, MAGIC);
     assert_eq!(frame.version, VERSION);
     assert_eq!(frame.flags, 0x01);
-    assert_eq!(encode_to_wire(&frame), bytes.as_slice());
+    assert_eq!(encode_to_wire(&frame).to_vec(), bytes);
 }
 
 #[test]
