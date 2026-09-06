@@ -65,12 +65,14 @@ fn magic_and_version_mutations_are_rejected_even_with_recomputed_crc() {
 
     let mut bad_magic = bytes.clone();
     bad_magic[60] ^= 0x01;
-    bad_magic[56..60].copy_from_slice(&crc32c(&bad_magic[..56]).to_le_bytes());
+    let bad_magic_crc = crc32c(&bad_magic[..56]);
+    bad_magic[56..60].copy_from_slice(&bad_magic_crc.to_le_bytes());
     assert!(decode(&bad_magic).is_err());
 
     let mut bad_version = bytes;
     bad_version[62] ^= 0x01;
-    bad_version[56..60].copy_from_slice(&crc32c(&bad_version[..56]).to_le_bytes());
+    let bad_version_crc = crc32c(&bad_version[..56]);
+    bad_version[56..60].copy_from_slice(&bad_version_crc.to_le_bytes());
     assert!(decode(&bad_version).is_err());
 }
 
