@@ -1,0 +1,10 @@
+[package]
+name = "sentinel-wire"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+crc32c = "0.6"
+
+[dev-dependencies]
+hex = "0.4"
