@@ -1,0 +1,18 @@
+[package]
+name = "sentinel-core"
+version = "0.1.0"
+edition = "2021"
+description = "Deterministic, no_std SentinelAI security enforcement core"
+license = "Apache-2.0"
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = []
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
