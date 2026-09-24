@@ -1,0 +1,9 @@
+[package]
+name = "ghost-twin"
+version = "0.1.0"
+edition = "2021"
+description = "Deterministic Ghost/Twin execution boundary for SentinelAI"
+license = "Apache-2.0"
+
+[dependencies]
+sentinel-core = { path = "../sentinel-core" }

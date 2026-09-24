@@ -1,0 +1,38 @@
+name: Rust Workspace Validation
+
+on:
+  pull_request:
+    paths:
+      - 'src/**/*.rs'
+      - 'tests/**/*.rs'
+      - 'crates/**/*.rs'
+      - 'crates/**/Cargo.toml'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/rust-abi.yml'
+      - '.github/workflows/rust-workspace.yml'
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test-rust-workspace:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust Stable Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check workspace
+        run: cargo check --workspace
+
+      - name: Test workspace
+        run: cargo test --workspace --all-targets
