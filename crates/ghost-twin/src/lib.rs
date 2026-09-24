@@ -42,9 +42,9 @@ impl ExecutionGate {
     pub const fn decide(&self, risk: Decision, live_requested: bool) -> GateDecision {
         match risk {
             Decision::Block => GateDecision::Deny,
-            Decision::Monitor if live_requested && self.allow_live => GateDecision::Live,
             Decision::Allow if live_requested && self.allow_live => GateDecision::Live,
-            _ => GateDecision::Shadow,
+            Decision::Monitor => GateDecision::Shadow,
+            Decision::Allow => GateDecision::Shadow,
         }
     }
 }
@@ -60,11 +60,20 @@ impl TwinEngine {
     }
 
     #[inline(always)]
-    pub fn evaluate(&self, core: &mut SentinelCore, intent: TradeIntent, payload: &[u8]) -> (Decision, GateDecision, PaperFill) {
+    pub fn evaluate(
+        &self,
+        core: &mut SentinelCore,
+        intent: TradeIntent,
+        payload: &[u8],
+    ) -> (Decision, GateDecision, PaperFill) {
         let risk = core.scan(payload);
         let gate = self.gate.decide(risk, intent.live_requested);
         let fill = match gate {
-            GateDecision::Deny => PaperFill { filled: false, amount_units: 0, slippage_bps: 0 },
+            GateDecision::Deny => PaperFill {
+                filled: false,
+                amount_units: 0,
+                slippage_bps: 0,
+            },
             GateDecision::Shadow | GateDecision::Live => PaperFill {
                 filled: true,
                 amount_units: intent.amount_units,
@@ -83,8 +92,30 @@ mod tests {
     fn live_is_disabled_by_default() {
         let engine = TwinEngine::new(ExecutionGate::denied());
         let mut core = SentinelCore::new();
-        let intent = TradeIntent { chain_id: 1, max_slippage_bps: 50, amount_units: 100, live_requested: true };
+        let intent = TradeIntent {
+            chain_id: 1,
+            max_slippage_bps: 50,
+            amount_units: 100,
+            live_requested: true,
+        };
         let (_, gate, fill) = engine.evaluate(&mut core, intent, b"clean");
+        assert_eq!(gate, GateDecision::Shadow);
+        assert!(fill.filled);
+    }
+
+    #[test]
+    fn monitor_can_never_go_live() {
+        let engine = TwinEngine::new(ExecutionGate::live_enabled());
+        let mut core = SentinelCore::new();
+        core.observe(sentinel_core::Signal::Debugger, 0);
+        let intent = TradeIntent {
+            chain_id: 1,
+            max_slippage_bps: 50,
+            amount_units: 100,
+            live_requested: true,
+        };
+        let (risk, gate, fill) = engine.evaluate(&mut core, intent, b"clean");
+        assert_eq!(risk, Decision::Monitor);
         assert_eq!(gate, GateDecision::Shadow);
         assert!(fill.filled);
     }
@@ -95,7 +126,12 @@ mod tests {
         let mut core = SentinelCore::new();
         core.observe(sentinel_core::Signal::Tamper, 0);
         core.observe(sentinel_core::Signal::Root, 0);
-        let intent = TradeIntent { chain_id: 1, max_slippage_bps: 50, amount_units: 100, live_requested: true };
+        let intent = TradeIntent {
+            chain_id: 1,
+            max_slippage_bps: 50,
+            amount_units: 100,
+            live_requested: true,
+        };
         let (risk, gate, fill) = engine.evaluate(&mut core, intent, b"clean");
         assert_eq!(risk, Decision::Block);
         assert_eq!(gate, GateDecision::Deny);
