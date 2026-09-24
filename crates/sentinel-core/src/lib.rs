@@ -138,7 +138,7 @@ impl SentinelCore {
         self.decision()
     }
     #[inline(always)] fn scan_token(&mut self, data: &[u8], token: &[u8], signal: Signal) { if let Some(offset) = find_subslice(data, token) { self.observe(signal, offset); } }
-    #[inline(always)] pub const fn decision(&self) -> Decision { match State::from_raw(self.state.load(Ordering::Acquire)) { State::Monitor => Decision::Allow, State::Anomalous => Decision::Monitor, State::Breached => Decision::Block } }
+    #[inline(always)] pub fn decision(&self) -> Decision { match State::from_raw(self.state.load(Ordering::Acquire)) { State::Monitor => Decision::Allow, State::Anomalous => Decision::Monitor, State::Breached => Decision::Block } }
     #[inline(always)] pub const fn event_count(&self) -> usize { self.ring.len() }
     #[inline(always)] pub fn event(&self, index: usize) -> Option<Event> { self.ring.get(index) }
 }
