@@ -23,3 +23,9 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -q
+
+      - name: Validate custody policy
+        run: python -c "from services.custody_policy.policy import load_policy; load_policy(); print('custody policy: valid')"
+
+      - name: Run custody policy tests
+        run: python -m pytest -q tests/custody_policy

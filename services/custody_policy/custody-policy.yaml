@@ -1,0 +1,49 @@
+version: "1.0"
+mode: FAIL_CLOSED
+custody:
+  minimum_threshold: 2
+  require_threshold_below_signer_count: true
+  minimum_signer_independence: 70
+  preferred_signer_independence: 85
+  minimum_recovery_score: 80
+modules:
+  default: DENY
+  require_source_verified: true
+  require_code_hash: true
+  require_audit_for_material: true
+guards:
+  default: DENY
+  require_source_verified: true
+  require_code_hash: true
+  require_audit_for_material: true
+  require_recovery_test: true
+allowlists:
+  modules: []
+  guards: []
+  module_guards: []
+  fallback_handlers: []
+transaction:
+  require_destination_verification: true
+  require_calldata_decoding: true
+  require_simulation_for_high_value: true
+  block_unlimited_approval: true
+  block_unknown_delegatecall: true
+recovery:
+  require_test: true
+  max_age_days: 365
+risk:
+  bands:
+    low_max: 19
+    moderate_max: 39
+    high_max: 59
+    critical_max: 79
+hard_blocks:
+  - unknown_module
+  - unknown_guard
+  - unknown_module_guard
+  - unknown_fallback
+  - simulation_mismatch
+  - unauthorized_owner_change
+  - unauthorized_threshold_change
+  - unbounded_delegatecall
+  - denylisted_destination
