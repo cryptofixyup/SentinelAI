@@ -1,0 +1,1 @@
+Stage 1 implementation is prepared on the Stage 0 hardening line. The acceptance gate remains CI-bound; no Stage 2 integration is authorized until the deterministic evidence boundary passes.

@@ -1,0 +1,33 @@
+name: Stage 0 Manifest Acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/stage0_manifest.py'
+      - 'tests/test_stage0_manifest.py'
+      - '.github/workflows/stage0-manifest.yml'
+  push:
+    branches:
+      - stage0-manifest-hardening
+
+permissions:
+  contents: read
+
+jobs:
+  stage0-acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependencies
+        run: python -m pip install pytest
+
+      - name: Execute Stage 0 adversarial acceptance suite
+        run: python -m pytest -q tests/test_stage0_manifest.py

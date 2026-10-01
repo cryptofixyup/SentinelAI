@@ -1,0 +1,1 @@
+Stage 1 gate: CI must pass before Stage 2. No LLM integration is part of this boundary.
