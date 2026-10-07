@@ -1,0 +1,13 @@
+{
+  "schema_version": "p4.1-a/v1",
+  "status": "UNFROZEN",
+  "case_id": null,
+  "hypothesis": null,
+  "targets": [],
+  "chains": [
+    {"name":"chain-a","chain_id":null,"rpc_url_env":null,"block_range":{"from":null,"to":null},"requests":[]},
+    {"name":"chain-b","chain_id":null,"rpc_url_env":null,"block_range":{"from":null,"to":null},"requests":[]}
+  ],
+  "required_observations":["temporal","funding","bytecode_infrastructure","liquidity_behavioral"],
+  "capture":{"hash_algorithm":"SHA-256","canonical_json":"sorted-key UTF-8 JSON"}
+}
