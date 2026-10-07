@@ -1,15 +1,18 @@
 {
   "schema_version":"p4.1-a/v1",
+  "canonicalization":"RFC 8785 JSON Canonicalization Scheme (JCS)",
+  "hash_algorithm":"SHA-256",
   "record":{
     "chain":"string",
     "chain_id":"integer",
     "method":"string",
     "params":"array",
-    "request_sha256":"hex-64",
-    "response_sha256":"hex-64",
+    "request_sha256":"hex-64 over JCS request",
+    "response_sha256":"hex-64 over JCS decoded response",
     "block_range":{"from":"integer","to":"integer"},
     "source_identifier":"string",
     "captured_at":"RFC3339 timestamp",
     "raw_response":"JSON value"
-  }
+  },
+  "dataset_digest":"SHA-256 over JCS deterministic manifest excluding capture timestamp"
 }
