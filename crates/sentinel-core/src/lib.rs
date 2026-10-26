@@ -78,31 +78,39 @@ impl EntropyWindow {
         let mut i = 0;
         while i < self.len { counts[self.bytes[i] as usize] = counts[self.bytes[i] as usize].saturating_add(1); i += 1; }
         let total = self.len as u32;
-        let mut sum = 0u32;
+        let mut sum = 0u64;
+        let log_total = log2_q16(total);
         i = 0;
         while i < 256 {
             let c = counts[i] as u32;
-            if c != 0 { sum = sum.saturating_add(entropy_term_milli(c, total)); }
+            if c != 0 { sum += u64::from(c) * u64::from(log_total - log2_q16(c)); }
             i += 1;
         }
-        sum
+        // Round once after summing p * log2(1/p), preserving small terms.
+        let denominator = u64::from(total) * 65536;
+        ((sum * 1000 + denominator / 2) / denominator) as u32
     }
 }
 
+// Binary logarithm in Q16 for positive byte counts (1..=ENTROPY_WINDOW).
+// Normalize to [1, 2), then recover fractional bits by repeated squaring.
+// Q16 intermediates are below 2^17, so their squares fit comfortably in u64.
 #[inline]
-fn entropy_term_milli(count: u32, total: u32) -> u32 {
-    if count == 0 || total == 0 { return 0; }
-    let ratio_q12 = (count.saturating_mul(4096)) / total;
-    if ratio_q12 == 0 { return 0; }
-    let floor_log2 = integer_log2(ratio_q12);
-    let denom = 1u32 << floor_log2;
-    let frac = ratio_q12.saturating_sub(denom).saturating_mul(1000) / denom;
-    let log2_milli = floor_log2.saturating_mul(1000).saturating_add(frac);
-    (count.saturating_mul(log2_milli)) / total
+fn log2_q16(value: u32) -> u32 {
+    let exponent = 31 - value.leading_zeros();
+    let mut normalized = (u64::from(value) << 16) >> exponent;
+    let mut result = exponent << 16;
+    let mut bit = 1 << 15;
+    while bit != 0 {
+        normalized = (normalized * normalized) >> 16;
+        if normalized >= (2 << 16) {
+            normalized >>= 1;
+            result |= bit;
+        }
+        bit >>= 1;
+    }
+    result
 }
-
-#[inline(always)]
-fn integer_log2(mut v: u32) -> u32 { let mut n = 0; while v > 1 { v >>= 1; n += 1; } n }
 
 #[repr(align(64))]
 pub struct SentinelCore { state: AtomicU8, ring: EventRing, entropy: EntropyWindow, score: u16 }
