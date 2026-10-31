@@ -19,6 +19,8 @@ CONTEXT = RiskAnalysisContext(
     policy_version="day13-v3",
     chain_id=1,
     destination="0x0000000000000000000000000000000000000001",
+    destination_reputation_status="unknown",
+    destination_reputation_confidence="low",
 )
 
 
@@ -94,11 +96,23 @@ def test_usage_metrics_and_cost_are_not_double_counted() -> None:
     ) == pytest.approx((500 + 20 + 250 + 250 + 200) / 1_000_000)
 
 
+def test_missing_usage_is_marked_unavailable_not_zero_cost() -> None:
+    usage = UsageMetrics.from_response({})
+    assert usage.available is False
+    with pytest.raises(ValueError, match="unavailable"):
+        usage.calculate_cost_usd(
+            input_price_per_million=1,
+            cached_input_price_per_million=0.1,
+            output_price_per_million=2,
+        )
+
+
 def test_usage_rejects_incomplete_cache_write_breakdown_for_costing() -> None:
     usage = UsageMetrics.from_response(
         {
             "usage": {
                 "input_tokens": 1000,
+                "output_tokens": 10,
                 "input_tokens_details": {"cache_write_tokens": 100},
             }
         }
@@ -130,6 +144,8 @@ def test_usage_event_contains_no_raw_prompt_content() -> None:
     assert "prompt_text" not in record
     assert "raw_prompt" not in record
     assert record["prompt_prefix_hash"] == "a" * 64
+    assert record["id"]
+    assert record["usage_available"] is True
 
 
 def test_responses_adapter_uses_mock_transport_only() -> None:
@@ -153,8 +169,8 @@ def test_responses_adapter_uses_mock_transport_only() -> None:
                                 "text": json.dumps(
                                     {
                                         "summary": "The deterministic policy returned warn.",
-                                        "observations": ["The supplied destination is on chain 1."],
-                                        "limitations": ["No reputation evidence was supplied to the explainer."],
+                                        "observations": ["The supplied destination reputation is unknown with low confidence."],
+                                        "limitations": ["No simulation or bytecode analysis was supplied."],
                                     }
                                 ),
                             }

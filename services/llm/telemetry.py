@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Any
 
 
@@ -13,10 +13,13 @@ class UsageMetrics:
     ttl_30m_tokens: int = 0
     ttl_12h_tokens: int = 0
     output_tokens: int = 0
+    available: bool = True
 
     @classmethod
     def from_response(cls, response: dict[str, Any]) -> "UsageMetrics":
-        usage = response.get("usage") or {}
+        usage = response.get("usage")
+        if not isinstance(usage, dict) or "input_tokens" not in usage or "output_tokens" not in usage:
+            return cls(available=False)
         details = usage.get("input_tokens_details") or {}
         write_details = details.get("cache_write_tokens_details") or {}
         values = cls(
@@ -27,7 +30,8 @@ class UsageMetrics:
             ttl_12h_tokens=int(write_details.get("ttl_12h_tokens") or 0),
             output_tokens=int(usage.get("output_tokens") or 0),
         )
-        if min(asdict(values).values()) < 0:
+        if min(values.input_tokens, values.cached_tokens, values.cache_write_tokens,
+               values.ttl_30m_tokens, values.ttl_12h_tokens, values.output_tokens) < 0:
             raise ValueError("usage token counts cannot be negative")
         if values.cached_tokens + values.cache_write_tokens > values.input_tokens:
             raise ValueError("cached and cache-write tokens exceed total input tokens")
@@ -43,6 +47,8 @@ class UsageMetrics:
         output_price_per_million: float,
     ) -> float:
         """Calculate cost from model-specific prices; no prices are guessed."""
+        if not self.available:
+            raise ValueError("usage metadata unavailable")
         prices = (input_price_per_million, cached_input_price_per_million, output_price_per_million)
         if any(price < 0 for price in prices):
             raise ValueError("prices must be non-negative")
@@ -84,9 +90,14 @@ def usage_event_record(
         "provider_request_id": provider_request_id,
         "prompt_version": prompt_version,
         "prompt_prefix_hash": prompt_prefix_hash,
-        **asdict(usage),
+        "usage_available": usage.available,
+        "input_tokens": usage.input_tokens,
+        "cached_tokens": usage.cached_tokens,
+        "cache_write_tokens": usage.cache_write_tokens,
+        "ttl_30m_tokens": usage.ttl_30m_tokens,
+        "ttl_12h_tokens": usage.ttl_12h_tokens,
+        "output_tokens": usage.output_tokens,
         "latency_ms": latency_ms,
         "status": status,
         "estimated_cost_usd": estimated_cost_usd,
     }
-}

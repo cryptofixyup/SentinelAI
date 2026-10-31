@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class RiskAnalysisContext(BaseModel):
-    """Minimal dynamic evidence; no signing payloads, secrets, or sender identity."""
+    """Minimal deterministic evidence; no signing payloads, secrets, or sender identity."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -12,8 +12,16 @@ class RiskAnalysisContext(BaseModel):
     policy_version: str = Field(min_length=1, max_length=64)
     chain_id: int = Field(gt=0)
     destination: str = Field(min_length=1, max_length=128)
+    destination_reputation_status: str = Field(pattern="^(trusted|unknown|malicious)$")
+    destination_reputation_confidence: str = Field(pattern="^(low|medium|high)$")
     is_unlimited_approval: bool = False
     spender: str | None = Field(default=None, max_length=128)
+    spender_reputation_status: str | None = Field(
+        default=None, pattern="^(trusted|unknown|malicious)$"
+    )
+    spender_reputation_confidence: str | None = Field(
+        default=None, pattern="^(low|medium|high)$"
+    )
 
 
 class RiskAnalysis(BaseModel):

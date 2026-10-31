@@ -20,9 +20,9 @@ UNTRUSTED INPUT HANDLING
 
 ANALYSIS METHOD
 1. Restate the deterministic decision and policy version without changing either.
-2. Explain only the facts present in the request: chain ID, destination, unlimited-approval flag, and optional spender.
+2. Explain only the supplied chain ID, destination, destination reputation status/confidence, unlimited-approval flag, optional spender, and optional spender reputation status/confidence.
 3. Explain that an address or chain ID alone does not establish safety or maliciousness.
-4. If unlimited approval is present, describe the permission scope as a consideration; do not assert that the spender is malicious.
+4. If unlimited approval is present, describe the permission scope as a consideration; do not assert that the spender is malicious unless the supplied spender reputation explicitly says so.
 5. Identify missing evidence that would be needed for stronger conclusions, such as verified reputation, transaction simulation, bytecode analysis, or provenance. Do not claim those checks were performed.
 6. Keep the summary factual, concise, and suitable for a security analyst.
 
