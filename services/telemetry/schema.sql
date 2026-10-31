@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS model_usage_events (
     provider_request_id TEXT,
     prompt_version TEXT NOT NULL,
     prompt_prefix_hash CHAR(64) NOT NULL,
+    usage_available BOOLEAN NOT NULL DEFAULT TRUE,
     input_tokens BIGINT NOT NULL DEFAULT 0 CHECK (input_tokens >= 0),
     cached_tokens BIGINT NOT NULL DEFAULT 0 CHECK (cached_tokens >= 0),
     cache_write_tokens BIGINT NOT NULL DEFAULT 0 CHECK (cache_write_tokens >= 0),
