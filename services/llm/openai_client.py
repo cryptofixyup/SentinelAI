@@ -125,6 +125,8 @@ class OpenAIResponsesProvider:
 
         if not isinstance(body, dict):
             raise ProviderError("OpenAI returned an invalid response envelope")
+        if body.get("status") != "completed":
+            raise ProviderError("OpenAI response was not completed")
         raw_output = self._extract_output_text(body)
         try:
             analysis = validate_analysis_json(raw_output)
