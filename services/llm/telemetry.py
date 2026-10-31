@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -77,6 +78,7 @@ def usage_event_record(
     if len(prompt_prefix_hash) != 64:
         raise ValueError("prompt_prefix_hash must be a SHA-256 hex digest")
     return {
+        "id": str(uuid.uuid4()),
         "provider": "openai",
         "model": model,
         "provider_request_id": provider_request_id,
@@ -87,3 +89,4 @@ def usage_event_record(
         "status": status,
         "estimated_cost_usd": estimated_cost_usd,
     }
+}

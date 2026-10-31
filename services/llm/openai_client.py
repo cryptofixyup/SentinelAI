@@ -31,6 +31,7 @@ class OpenAIResponsesProvider:
         self.last_latency_ms = 0
         self.last_prompt_version = PROMPT_VERSION
         self.last_prompt_prefix_hash = self.prefix_hash()
+        self.last_estimated_cost_usd: float | None = None
 
     @staticmethod
     def prefix_hash() -> str:
@@ -122,6 +123,8 @@ class OpenAIResponsesProvider:
         except (httpx.RequestError, ValueError) as exc:
             raise ProviderError("OpenAI request failed or returned invalid JSON") from exc
 
+        if not isinstance(body, dict):
+            raise ProviderError("OpenAI returned an invalid response envelope")
         raw_output = self._extract_output_text(body)
         try:
             analysis = validate_analysis_json(raw_output)
@@ -135,16 +138,37 @@ class OpenAIResponsesProvider:
         self.last_latency_ms = max(0, int((time.perf_counter() - started) * 1000))
         self.last_prompt_version = PROMPT_VERSION
         self.last_prompt_prefix_hash = self.prefix_hash()
+        prices = (
+            self.settings.input_price_per_million,
+            self.settings.cached_input_price_per_million,
+            self.settings.output_price_per_million,
+        )
+        self.last_estimated_cost_usd = None
+        if all(price is not None for price in prices):
+            try:
+                self.last_estimated_cost_usd = usage.calculate_cost_usd(
+                    input_price_per_million=float(prices[0]),
+                    cached_input_price_per_million=float(prices[1]),
+                    output_price_per_million=float(prices[2]),
+                )
+            except ValueError:
+                # Preserve the valid analysis but leave cost unknown if usage
+                # cannot be priced safely from the returned breakdown.
+                self.last_estimated_cost_usd = None
         return analysis
 
     @staticmethod
     def _extract_output_text(body: dict[str, Any]) -> str:
         chunks: list[str] = []
         for item in body.get("output") or []:
-            if item.get("type") != "message":
+            if not isinstance(item, dict) or item.get("type") != "message":
                 continue
             for content in item.get("content") or []:
-                if content.get("type") == "output_text" and isinstance(content.get("text"), str):
+                if (
+                    isinstance(content, dict)
+                    and content.get("type") == "output_text"
+                    and isinstance(content.get("text"), str)
+                ):
                     chunks.append(content["text"])
         if not chunks:
             raise ProviderError("OpenAI response contained no structured text output")
