@@ -159,6 +159,7 @@ def test_responses_adapter_uses_mock_transport_only() -> None:
             200,
             headers={"x-request-id": "req_mock"},
             json={
+                "status": "completed",
                 "model": "gpt-test-model",
                 "output": [
                     {
@@ -210,3 +211,68 @@ def test_provider_http_failure_does_not_leak_response_body() -> None:
     with pytest.raises(ProviderError, match="HTTP 429") as error:
         asyncio.run(run())
     assert "sensitive provider response body" not in str(error.value)
+
+
+def test_provider_timeout_is_wrapped_as_provider_error() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("simulated timeout", request=request)
+
+    async def run() -> None:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            provider = OpenAIResponsesProvider(settings(), client=client)
+            await provider.analyze(CONTEXT)
+
+    with pytest.raises(ProviderError, match="timed out"):
+        asyncio.run(run())
+
+
+def test_provider_rejects_incomplete_response_even_with_valid_output() -> None:
+    output = json.dumps(
+        {
+            "summary": "The deterministic policy returned warn.",
+            "observations": ["The supplied destination reputation is unknown with low confidence."],
+            "limitations": ["No simulation or bytecode analysis was supplied."],
+        }
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "status": "incomplete",
+                "model": "gpt-test-model",
+                "output": [
+                    {
+                        "type": "message",
+                        "content": [{"type": "output_text", "text": output}],
+                    }
+                ],
+            },
+        )
+
+    async def run() -> None:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            provider = OpenAIResponsesProvider(settings(), client=client)
+            await provider.analyze(CONTEXT)
+
+    with pytest.raises(ProviderError, match="not completed"):
+        asyncio.run(run())
+
+
+@pytest.mark.parametrize(
+    "usage",
+    [
+        {"input_tokens": 10, "output_tokens": 2, "input_tokens_details": []},
+        {
+            "input_tokens": 10,
+            "output_tokens": 2,
+            "input_tokens_details": {"cache_write_tokens_details": []},
+        },
+        {"input_tokens": True, "output_tokens": 2},
+        {"input_tokens": 10, "output_tokens": 2.5},
+        {"input_tokens": "10", "output_tokens": 2},
+    ],
+)
+def test_usage_rejects_malformed_details_and_non_integer_counts(usage: dict[str, object]) -> None:
+    with pytest.raises(ValueError):
+        UsageMetrics.from_response({"usage": usage})
