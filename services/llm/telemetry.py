@@ -5,6 +5,15 @@ from dataclasses import dataclass
 from typing import Any
 
 
+def _count(source: dict[str, Any], key: str) -> int:
+    value = source.get(key)
+    if value is None:
+        return 0
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"usage field {key} must be an integer")
+    return value
+
+
 @dataclass(frozen=True)
 class UsageMetrics:
     input_tokens: int = 0
@@ -20,15 +29,21 @@ class UsageMetrics:
         usage = response.get("usage")
         if not isinstance(usage, dict) or "input_tokens" not in usage or "output_tokens" not in usage:
             return cls(available=False)
-        details = usage.get("input_tokens_details") or {}
-        write_details = details.get("cache_write_tokens_details") or {}
+        details = usage.get("input_tokens_details")
+        details = {} if details is None else details
+        if not isinstance(details, dict):
+            raise ValueError("input_tokens_details must be a JSON object")
+        write_details = details.get("cache_write_tokens_details")
+        write_details = {} if write_details is None else write_details
+        if not isinstance(write_details, dict):
+            raise ValueError("cache_write_tokens_details must be a JSON object")
         values = cls(
-            input_tokens=int(usage.get("input_tokens") or 0),
-            cached_tokens=int(details.get("cached_tokens") or 0),
-            cache_write_tokens=int(details.get("cache_write_tokens") or 0),
-            ttl_30m_tokens=int(write_details.get("ttl_30m_tokens") or 0),
-            ttl_12h_tokens=int(write_details.get("ttl_12h_tokens") or 0),
-            output_tokens=int(usage.get("output_tokens") or 0),
+            input_tokens=_count(usage, "input_tokens"),
+            cached_tokens=_count(details, "cached_tokens"),
+            cache_write_tokens=_count(details, "cache_write_tokens"),
+            ttl_30m_tokens=_count(write_details, "ttl_30m_tokens"),
+            ttl_12h_tokens=_count(write_details, "ttl_12h_tokens"),
+            output_tokens=_count(usage, "output_tokens"),
         )
         if min(values.input_tokens, values.cached_tokens, values.cache_write_tokens,
                values.ttl_30m_tokens, values.ttl_12h_tokens, values.output_tokens) < 0:
